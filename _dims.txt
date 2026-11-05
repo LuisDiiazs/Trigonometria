@@ -1,0 +1,1 @@
+{"innerWidth":500,"innerHeight":748,"clientWidth":500,"dpr":1,"canvas":{"left":0,"top":60,"width":500,"height":688},"mq480":false,"mq720":true,"mq900":true,"topbar":500,"brandDisplay":"flex","actions":{"left":257,"right":488,"width":231}}

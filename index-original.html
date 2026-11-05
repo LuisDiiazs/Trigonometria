@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F1F5F9">
+<meta name="description" content="Círculo trigonométrico interativo com gráfico de ondas, tabela de ângulos notáveis e ferramentas de desenho.">
+<title>Círculo Trigonométrico Interativo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --primary: #2563EB;
+    --primary-dark: #1E40AF;
+    --primary-light: #EFF6FF;
+    --primary-rgb: 37, 99, 235;
+    --sin: #EF4444;
+    --sin-rgb: 239, 68, 68;
+    --cos: #2563EB;
+    --cos-rgb: 37, 99, 235;
+    --tan: #F59E0B;
+    --tan-rgb: 245, 158, 11;
+    --tan-dark: #B45309;
+    --quad: #10B981;
+    --quad-rgb: 16, 185, 129;
+    --solution: #7C3AED;
+    --solution-rgb: 124, 58, 237;
+    --error: #DC2626;
+
+    --bg: #F1F5F9;
+    --bg-panel: #FFFFFF;
+    --bg-hover: #F1F5F9;
+    --bg-subtle: #F8FAFC;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+
+    --text: #0F172A;
+    --text-muted: #64748B;
+    --text-faint: #94A3B8;
+
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 8px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 12px 20px -6px rgba(15, 23, 42, 0.10), 0 4px 8px -4px rgba(15, 23, 42, 0.06);
+    --shadow-xl: 0 24px 32px -8px rgba(15, 23, 42, 0.12), 0 8px 12px -6px rgba(15, 23, 42, 0.06);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --color-axis-rgb: 15, 23, 42;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  html, body {
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+    touch-action: none;
+    will-change: transform;
+  }
+  canvas.cursor-grab { cursor: grab; }
+  canvas.cursor-grabbing { cursor: grabbing; }
+  canvas.cursor-move { cursor: move; }
+  canvas.cursor-crosshair { cursor: crosshair; }
+  canvas.cursor-pointer { cursor: pointer; }
+
+  .sidebar {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    bottom: 16px;
+    width: 290px;
+    max-width: calc(100vw - 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 5;
+    padding-top: env(safe-area-inset-top, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    overflow-y: auto;
+    pointer-events: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+  .sidebar > * { pointer-events: auto; }
+
+  .group {
+    background: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow 0.25s var(--ease-out);
+  }
+  .group:hover { box-shadow: var(--shadow-md); }
+
+  .groupHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, var(--bg-subtle) 0%, rgba(248, 250, 252, 0.5) 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .groupHeaderIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.3);
+  }
+  .groupHeaderIcon svg { width: 15px; height: 15px; }
+  .groupHeader h3 {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+  }
+
+  .groupBody { padding: 14px 16px; }
+
+  .valueRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    transition: background 0.15s;
+    border-radius: var(--radius-sm);
+  }
+  .valueRow + .valueRow {
+    border-top: 1px dashed rgba(226, 232, 240, 0.8);
+    margin-top: 2px;
+    padding-top: 10px;
+  }
+
+  .valueRowLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.2px;
+  }
+  .valueRowLabel::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s var(--ease-spring);
+  }
+  .valueRow:hover .valueRowLabel::before { transform: scale(1.15); }
+  .valueRow.angle .valueRowLabel::before { background: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
+  .valueRow.sin .valueRowLabel::before { background: var(--sin); box-shadow: 0 0 0 3px rgba(var(--sin-rgb), 0.15); }
+  .valueRow.cos .valueRowLabel::before { background: var(--cos); box-shadow: 0 0 0 3px rgba(var(--cos-rgb), 0.15); }
+  .valueRow.tan .valueRowLabel::before { background: var(--tan); box-shadow: 0 0 0 3px rgba(var(--tan-rgb), 0.15); }
+
+  .valueRowNum {
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    transition: all 0.2s var(--ease-out);
+    letter-spacing: -0.3px;
+  }
+  .valueRow.angle .valueRowNum { color: var(--primary); }
+  .valueRow.sin .valueRowNum { color: var(--sin); }
+  .valueRow.cos .valueRowNum { color: var(--cos); }
+  .valueRow.tan .valueRowNum { color: var(--tan-dark); }
+
+  .inputStack { display: flex; flex-direction: column; gap: 10px; }
+
+  .inputRow {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .inputRow input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: #FFFFFF;
+    color: var(--text);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s var(--ease-out);
+    -webkit-user-select: text;
+    user-select: text;
+    cursor: text;
+    box-shadow: var(--shadow-xs);
+  }
+  .inputRow input::placeholder { color: var(--text-faint); font-weight: 400; font-size: 12px; }
+  .inputRow input:hover:not(:focus) { border-color: var(--border-strong); }
+  .inputRow input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12), var(--shadow-xs);
+  }
+  .inputRow input.error {
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+    animation: shake 0.35s var(--ease-out);
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
+  .inputRow select {
+    padding: 10px 26px 10px 10px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: #FFFFFF;
+    color: var(--text);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748B' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    transition: all 0.2s var(--ease-out);
+    min-width: 60px;
+    box-shadow: var(--shadow-xs);
+  }
+  .inputRow select:hover:not(:focus) { border-color: var(--border-strong); }
+  .inputRow select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12), var(--shadow-xs);
+  }
+
+  .inputRow button {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #FFFFFF;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    touch-action: manipulation;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .inputRow button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .inputRow button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
+  }
+  .inputRow button:hover::before { opacity: 1; }
+  .inputRow button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 4px rgba(var(--primary-rgb), 0.3);
+  }
+  .inputRow button svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.5;
+    position: relative;
+    z-index: 1;
+  }
+
+  .solutionsBox {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(180deg, rgba(var(--solution-rgb), 0.08) 0%, rgba(var(--solution-rgb), 0.03) 100%);
+    border: 1px solid rgba(var(--solution-rgb), 0.25);
+    display: none;
+    animation: slideDown 0.25s var(--ease-out);
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .solutionsBox.visible { display: block; }
+  .solutionsBox h4 {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--solution);
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .solutionsList { display: flex; flex-wrap: wrap; gap: 6px; }
+  .solutionChip {
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--solution) 0%, #6D28D9 100%);
+    color: #FFFFFF;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-spring);
+    border: none;
+    touch-action: manipulation;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(var(--solution-rgb), 0.3);
+  }
+  .solutionChip:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 14px rgba(var(--solution-rgb), 0.4);
+  }
+  .solutionChip:active { transform: translateY(0) scale(0.97); }
+  .solutionChip small { font-size: 9px; opacity: 0.9; font-weight: 500; }
+
+  .angleTable {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xl);
+    color: var(--text);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 13px;
+    z-index: 30;
+    cursor: move;
+    user-select: none;
+    overflow: hidden;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    padding-right: env(safe-area-inset-right, 0);
+    animation: fadeIn 0.3s var(--ease-out);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .angleTable.hidden { display: none; }
+  .angleTableHeader {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--bg-subtle) 0%, rgba(248, 250, 252, 0.5) 100%);
+    cursor: move;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .angleTableHeader::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 2px;
+  }
+  .angleTable h4 {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .angleTableBody {
+    overflow-y: auto;
+    cursor: default;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .angleTableBody::-webkit-scrollbar { width: 6px; }
+  .angleTableBody::-webkit-scrollbar-track { background: transparent; }
+  .angleTableBody::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 3px;
+  }
+  .angleTable table { border-collapse: collapse; width: 100%; }
+  .angleTable th {
+    color: var(--text-faint);
+    font-weight: 800;
+    padding: 10px 14px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--bg-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 1px solid var(--border);
+  }
+  .angleTable td {
+    padding: 8px 14px;
+    text-align: center;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+  .angleTable tr:last-child td { border-bottom: none; }
+  .angleTable tbody tr { transition: background 0.15s; }
+  .angleTable tbody tr:hover { background: var(--bg-hover); }
+  .angleTable .col-angle { color: var(--primary); font-weight: 700; }
+  .angleTable .col-sin { color: var(--sin); font-weight: 600; }
+  .angleTable .col-cos { color: var(--cos); font-weight: 600; }
+  .angleTable .col-tan { color: var(--tan-dark); font-weight: 600; }
+  .angleTable .section-title {
+    color: var(--text-faint);
+    font-size: 9px;
+    font-weight: 800;
+    text-align: center;
+    padding: 12px 0 6px;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    background: var(--bg-subtle);
+  }
+
+  .bottomBar {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    align-items: stretch;
+    z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+  }
+  .toggleBtn {
+    width: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-panel);
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.25s var(--ease-out);
+    font-size: 10px;
+    touch-action: manipulation;
+    position: relative;
+  }
+
+  .bottomBar.collapsed .toggleBtn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #FFFFFF;
+    border-color: var(--primary-dark);
+    box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.45), 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+    animation: pulseBlue 2.2s infinite;
+  }
+
+  @keyframes pulseBlue {
+    0%, 100% {
+      box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.45), 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+    }
+    50% {
+      box-shadow: 0 4px 18px rgba(var(--primary-rgb), 0.6), 0 0 0 6px rgba(var(--primary-rgb), 0.08);
+    }
+  }
+
+  .bottomBar.collapsed .toggleBtn:hover {
+    transform: translateX(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.55), 0 0 0 4px rgba(var(--primary-rgb), 0.2);
+    animation: none;
+  }
+
+  .bottomBar:not(.collapsed) .toggleBtn {
+    background: var(--bg-panel);
+    color: var(--text-faint);
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .bottomBar:not(.collapsed) .toggleBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    transform: translateX(-2px);
+  }
+
+  .toggleBtn:active { transform: scale(0.95); }
+
+  .slidingPanel {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-left: 8px;
+    transition: transform 0.35s var(--ease-out), opacity 0.25s;
+    transform-origin: left center;
+  }
+  .bottomBar.collapsed .slidingPanel {
+    transform: translateX(-120%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .toolGroup {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    background: var(--bg-panel);
+    padding: 6px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .toolGroup button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s var(--ease-out);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    touch-action: manipulation;
+    position: relative;
+  }
+  .toolGroup button:hover { background: var(--bg-hover); transform: translateY(-1px); }
+  .toolGroup button:active { transform: translateY(0) scale(0.94); }
+  .toolGroup button.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(var(--primary-rgb), 0.35);
+  }
+  .toolGroup button svg {
+    width: 19px;
+    height: 19px;
+    color: inherit;
+    pointer-events: none;
+    transition: transform 0.2s var(--ease-out);
+  }
+  .toolGroup button:hover svg { transform: scale(1.05); }
+
+  .colorPicker {
+    display: none;
+    flex-direction: row;
+    gap: 6px;
+    background: var(--bg-panel);
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    align-items: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .colorPicker.visible { display: flex; animation: fadeIn 0.25s var(--ease-out); }
+  .colorPicker .swatch {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(15, 23, 42, 0.08);
+    transition: all 0.2s var(--ease-spring);
+    touch-action: manipulation;
+    padding: 0;
+    position: relative;
+  }
+  .colorPicker .swatch:hover { transform: scale(1.15); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .colorPicker .swatch:active { transform: scale(1.05); }
+  .colorPicker .swatch.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3), 0 0 0 4px #FFFFFF;
+  }
+
+  .filterBar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    background: var(--bg-panel);
+    padding: 6px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .filterBar button {
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s var(--ease-out);
+    letter-spacing: 0.5px;
+    touch-action: manipulation;
+    min-height: 36px;
+    position: relative;
+  }
+  .filterBar button:hover { background: var(--bg-hover); color: var(--text); transform: translateY(-1px); }
+  .filterBar button:active { transform: translateY(0) scale(0.96); }
+  .filterBar button.active[data-filter="sin"] {
+    background: linear-gradient(135deg, var(--sin) 0%, #DC2626 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(var(--sin-rgb), 0.4);
+  }
+  .filterBar button.active[data-filter="cos"] {
+    background: linear-gradient(135deg, var(--cos) 0%, #1E40AF 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(var(--cos-rgb), 0.4);
+  }
+  .filterBar button.active[data-filter="tan"] {
+    background: linear-gradient(135deg, var(--tan) 0%, #D97706 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(var(--tan-rgb), 0.4);
+  }
+  .filterBar button.active[data-filter="quad"] {
+    background: linear-gradient(135deg, var(--quad) 0%, #059669 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(var(--quad-rgb), 0.4);
+  }
+  .filterBar button[data-filter="quad"].disabled-mode {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .viewBar {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+  .viewGroup {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    background: var(--bg-panel);
+    padding: 6px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .viewGroup button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s var(--ease-out);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    padding: 0;
+  }
+  .viewGroup button:hover { background: var(--bg-hover); transform: translateY(-1px); }
+  .viewGroup button:active { transform: translateY(0) scale(0.94); }
+  .viewGroup button.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(var(--primary-rgb), 0.35);
+  }
+  .viewGroup button svg {
+    width: 19px;
+    height: 19px;
+    color: inherit;
+    pointer-events: none;
+    transition: transform 0.2s var(--ease-out);
+  }
+  .viewGroup button:hover svg { transform: scale(1.05); }
+  .viewGroup button#btnZoomIn.hidden-mode { display: none; }
+
+  @media (max-width: 900px) { .sidebar { width: 270px; } }
+  @media (max-width: 700px) {
+    .angleTable { font-size: 12px; }
+    .angleTableHeader { padding: 12px 14px; }
+    .angleTable h4 { font-size: 10px; }
+    .angleTable th { font-size: 9px; padding: 8px 10px; }
+    .angleTable td { font-size: 12px; padding: 7px 10px; }
+    .angleTable .section-title { font-size: 8px; padding: 10px 0 4px; }
+  }
+  @media (max-width: 600px) {
+    .sidebar { width: 230px; gap: 10px; }
+    .groupHeader { padding: 10px 14px; }
+    .groupBody { padding: 12px 14px; }
+    .valueRowNum { font-size: 12px; padding: 3px 8px; }
+    .inputRow input { font-size: 12px; padding: 9px 10px; }
+    .inputRow select { font-size: 11px; padding: 9px 22px 9px 8px; min-width: 54px; }
+    .inputRow button { font-size: 12px; padding: 9px 14px; }
+    .solutionChip { font-size: 10px; padding: 5px 10px; }
+    .angleTable { font-size: 11px; }
+    .angleTable th { font-size: 9px; padding: 6px 8px; }
+    .angleTable td { font-size: 11px; padding: 6px 8px; }
+    .toolGroup button { width: 38px; height: 38px; }
+    .filterBar button { padding: 8px 12px; font-size: 11px; }
+    .viewGroup button { width: 38px; height: 38px; }
+  }
+  @media (max-width: 450px) {
+    .sidebar { width: 210px; gap: 8px; }
+    .groupHeader { padding: 8px 12px; gap: 8px; }
+    .groupHeaderIcon { width: 24px; height: 24px; }
+    .groupHeaderIcon svg { width: 13px; height: 13px; }
+    .groupHeader h3 { font-size: 9px; }
+    .groupBody { padding: 10px 12px; }
+    .valueRow { padding: 6px 0; }
+    .valueRowLabel { font-size: 10px; gap: 6px; }
+    .valueRowLabel::before { width: 7px; height: 7px; }
+    .valueRowNum { font-size: 11px; padding: 3px 7px; }
+    .inputRow input { font-size: 11px; padding: 8px 10px; }
+    .inputRow button { font-size: 11px; padding: 8px 12px; min-width: 40px; }
+    .solutionChip { font-size: 10px; padding: 4px 9px; }
+    .angleTable { font-size: 10px; }
+    .angleTable th { font-size: 8px; padding: 5px 6px; }
+    .angleTable td { font-size: 10px; padding: 5px 6px; }
+    .angleTable .section-title { font-size: 7px; }
+    .toolGroup button { width: 36px; height: 36px; }
+    .toolGroup button svg { width: 17px; height: 17px; }
+    .filterBar button { padding: 7px 10px; font-size: 10px; }
+    .viewGroup button { width: 36px; height: 36px; }
+    .viewGroup button svg { width: 17px; height: 17px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-contrast: high) {
+    :root {
+      --border: #64748B;
+      --border-strong: #475569;
+      --text-muted: #1E293B;
+      --text-faint: #475569;
+    }
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div class="sidebar">
+  <div class="group">
+    <div class="groupHeader">
+      <div class="groupHeaderIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <h3>Valores Atuais</h3>
+    </div>
+    <div class="groupBody">
+      <div class="valueRow angle">
+        <span class="valueRowLabel">θ</span>
+        <span class="valueRowNum" id="angleVal">0° · 0</span>
+      </div>
+      <div class="valueRow sin">
+        <span class="valueRowLabel">sen θ</span>
+        <span class="valueRowNum" id="sinVal">0.000</span>
+      </div>
+      <div class="valueRow cos">
+        <span class="valueRowLabel">cos θ</span>
+        <span class="valueRowNum" id="cosVal">1.000</span>
+      </div>
+      <div class="valueRow tan">
+        <span class="valueRowLabel">tan θ</span>
+        <span class="valueRowNum" id="tanVal">0.000</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="groupHeader">
+      <div class="groupHeaderIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20V4M5 11l7-7 7 7"/>
+        </svg>
+      </div>
+      <h3>Inserir Ângulo</h3>
+    </div>
+    <div class="groupBody">
+      <div class="inputStack">
+        <div class="inputRow">
+          <input type="text" id="angleInput" placeholder="45, 720, π/4, 10π..." inputmode="decimal" autocomplete="off" spellcheck="false">
+          <select id="angleUnit">
+            <option value="deg">°</option>
+            <option value="rad">rad</option>
+            <option value="pi">π</option>
+          </select>
+          <button id="angleApply" title="Aplicar" aria-label="Aplicar ângulo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="groupHeader">
+      <div class="groupHeaderIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+      </div>
+      <h3>Achar Ângulo</h3>
+    </div>
+    <div class="groupBody">
+      <div class="inputStack">
+        <div class="inputRow">
+          <input type="text" id="trigInput" placeholder="0.5, -1, 0.866..." inputmode="decimal" autocomplete="off" spellcheck="false">
+          <select id="trigFunc">
+            <option value="sin">sen</option>
+            <option value="cos">cos</option>
+            <option value="tan">tan</option>
+          </select>
+          <button id="trigApply" title="Buscar" aria-label="Buscar ângulos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+        </div>
+        <div class="solutionsBox" id="solutionsBox">
+          <h4>Soluções</h4>
+          <div class="solutionsList" id="solutionsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="angleTable hidden" id="angleTable">
+  <div class="angleTableHeader">
+    <h4>Ângulos Notáveis</h4>
+  </div>
+  <div class="angleTableBody">
+    <table>
+      <thead><tr><th>θ</th><th>rad</th><th>sen</th><th>cos</th><th>tan</th></tr></thead>
+      <tbody>
+        <tr class="section-title"><td colspan="5">1º Quadrante</td></tr>
+        <tr><td class="col-angle">0°</td><td>0</td><td class="col-sin">0</td><td class="col-cos">1</td><td class="col-tan">0</td></tr>
+        <tr><td class="col-angle">30°</td><td>π/6</td><td class="col-sin">1/2</td><td class="col-cos">√3/2</td><td class="col-tan">√3/3</td></tr>
+        <tr><td class="col-angle">45°</td><td>π/4</td><td class="col-sin">√2/2</td><td class="col-cos">√2/2</td><td class="col-tan">1</td></tr>
+        <tr><td class="col-angle">60°</td><td>π/3</td><td class="col-sin">√3/2</td><td class="col-cos">1/2</td><td class="col-tan">√3</td></tr>
+        <tr><td class="col-angle">90°</td><td>π/2</td><td class="col-sin">1</td><td class="col-cos">0</td><td class="col-tan">∞</td></tr>
+        <tr class="section-title"><td colspan="5">2º Quadrante</td></tr>
+        <tr><td class="col-angle">120°</td><td>2π/3</td><td class="col-sin">√3/2</td><td class="col-cos">-1/2</td><td class="col-tan">-√3</td></tr>
+        <tr><td class="col-angle">135°</td><td>3π/4</td><td class="col-sin">√2/2</td><td class="col-cos">-√2/2</td><td class="col-tan">-1</td></tr>
+        <tr><td class="col-angle">150°</td><td>5π/6</td><td class="col-sin">1/2</td><td class="col-cos">-√3/2</td><td class="col-tan">-√3/3</td></tr>
+        <tr><td class="col-angle">180°</td><td>π</td><td class="col-sin">0</td><td class="col-cos">-1</td><td class="col-tan">0</td></tr>
+        <tr class="section-title"><td colspan="5">3º Quadrante</td></tr>
+        <tr><td class="col-angle">210°</td><td>7π/6</td><td class="col-sin">-1/2</td><td class="col-cos">-√3/2</td><td class="col-tan">√3/3</td></tr>
+        <tr><td class="col-angle">225°</td><td>5π/4</td><td class="col-sin">-√2/2</td><td class="col-cos">-√2/2</td><td class="col-tan">1</td></tr>
+        <tr><td class="col-angle">240°</td><td>4π/3</td><td class="col-sin">-√3/2</td><td class="col-cos">-1/2</td><td class="col-tan">√3</td></tr>
+        <tr><td class="col-angle">270°</td><td>3π/2</td><td class="col-sin">-1</td><td class="col-cos">0</td><td class="col-tan">∞</td></tr>
+        <tr class="section-title"><td colspan="5">4º Quadrante</td></tr>
+        <tr><td class="col-angle">300°</td><td>5π/3</td><td class="col-sin">-√3/2</td><td class="col-cos">1/2</td><td class="col-tan">-√3</td></tr>
+        <tr><td class="col-angle">315°</td><td>7π/4</td><td class="col-sin">-√2/2</td><td class="col-cos">√2/2</td><td class="col-tan">-1</td></tr>
+        <tr><td class="col-angle">330°</td><td>11π/6</td><td class="col-sin">-1/2</td><td class="col-cos">√3/2</td><td class="col-tan">-√3/3</td></tr>
+        <tr><td class="col-angle">360°</td><td>2π</td><td class="col-sin">0</td><td class="col-cos">1</td><td class="col-tan">0</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="filterBar">
+  <button data-filter="sin" class="active">sen</button>
+  <button data-filter="cos" class="active">cos</button>
+  <button data-filter="tan" class="active">tan</button>
+  <button data-filter="quad" class="active" id="btnQuadFilter">quad</button>
+</div>
+
+<div class="bottomBar collapsed" id="bottomBar">
+  <div class="toggleBtn" id="toggleBtn" title="Mostrar/ocultar ferramentas">▶</div>
+  <div class="slidingPanel">
+    <div class="toolGroup">
+      <button id="btnDraw" title="Lápis" aria-label="Lápis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+          <path d="M2 2l7.586 7.586"/>
+          <circle cx="11" cy="11" r="2"/>
+        </svg>
+      </button>
+      <button id="btnErase" title="Borracha" aria-label="Borracha">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 20H7L3 16a2 2 0 0 1 0-2.83l10-10a2 2 0 0 1 2.83 0l5 5a2 2 0 0 1 0 2.83L11 20"/>
+          <line x1="8" y1="12" x2="14" y2="18"/>
+        </svg>
+      </button>
+      <button id="btnClear" title="Limpar tudo" aria-label="Limpar desenhos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </button>
+    </div>
+    <div class="colorPicker" id="colorPicker">
+      <button class="swatch selected" data-color="#0F172A" style="background:#0F172A;" aria-label="Preto"></button>
+      <button class="swatch" data-color="#2563EB" style="background:#2563EB;" aria-label="Azul"></button>
+      <button class="swatch" data-color="#EF4444" style="background:#EF4444;" aria-label="Vermelho"></button>
+      <button class="swatch" data-color="#F59E0B" style="background:#F59E0B;" aria-label="Amarelo"></button>
+      <button class="swatch" data-color="#10B981" style="background:#10B981;" aria-label="Verde"></button>
+      <button class="swatch" data-color="#FFFFFF" style="background:#FFFFFF;" aria-label="Branco"></button>
+    </div>
+  </div>
+</div>
+
+<div class="viewBar">
+  <div class="viewGroup">
+    <button id="btnGraphMode" title="Alternar círculo ↔ gráfico" aria-label="Alternar visualização">
+      <svg id="graphIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12c3 -8 6 8 9 0s6 -8 9 0"/>
+      </svg>
+    </button>
+    <button id="btnTable" title="Tabela de ângulos" aria-label="Mostrar tabela">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="15" y1="9" x2="15" y2="21"/>
+      </svg>
+    </button>
+  </div>
+  <div class="viewGroup">
+    <button id="btnZoomIn" title="Aumentar zoom" aria-label="Aumentar zoom">＋</button>
+    <button id="btnReset" title="Resetar" aria-label="Resetar">⟲</button>
+  </div>
+</div>
+
+<script>
+const COLORS = {
+  primary:   '#2563EB',
+  sin:       '#EF4444',
+  cos:       '#2563EB',
+  tan:       '#F59E0B',
+  tanDark:   '#B45309',
+  quad:      '#10B981',
+  solution:  '#7C3AED',
+  bg:        '#F1F5F9',
+  text:      '#0F172A',
+  axis:      '#0F172A',
+  axisRgb:   '15, 23, 42',
+  grid:      'rgba(15, 23, 42, 0.05)',
+};
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { alpha: false });
+
+let W, H, dpr;
+let baseCx, baseCy, baseR;
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  baseCx = W / 2;
+  baseCy = H / 2;
+  baseR = Math.min(W, H) * 0.3;
+}
+resize();
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(resize, 100);
+}, { passive: true });
+
+window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+
+const MIN_ZOOM = 0.7;
+const MAX_ZOOM = 8;
+const camera = { zoom: 1, offsetX: 0, offsetY: 0 };
+
+function screenToWorld(sx, sy) {
+  return {
+    x: baseCx + (sx - baseCx - camera.offsetX) / camera.zoom,
+    y: baseCy + (sy - baseCy - camera.offsetY) / camera.zoom,
+  };
+}
+
+let cx, cy, R;
+let angle = 0;
+let angleNorm = 0;
+
+let dragging = false;
+let panning = false;
+let lastPointer = { x: 0, y: 0 };
+let touchStartDist = 0;
+let touchStartZoom = 1;
+let touchStartMid = { x: 0, y: 0 };
+
+const visibility = { sin: true, cos: true, tan: true, quad: true };
+
+let drawingMode = false;
+let erasingMode = false;
+let isDrawing = false;
+let currentStroke = null;
+let pencilColor = COLORS.text;
+const strokes = [];
+
+let viewMode = 'circle';
+let solutions = [];
+
+const graphPan = { offsetX: 0 };
+
+const cursors = {
+  default: 'cursor-grab',
+  dragging: 'cursor-grabbing',
+  panning: 'cursor-move',
+  drawing: 'cursor-crosshair',
+  pointer: 'cursor-pointer'
+};
+
+function setCursor(type) {
+  canvas.classList.remove(cursors.default, cursors.dragging, cursors.panning, cursors.drawing, cursors.pointer);
+  if (type) canvas.classList.add(type);
+}
+setCursor(cursors.default);
+
+function updateBaseCursor() {
+  if (drawingMode || erasingMode) setCursor(cursors.drawing);
+  else setCursor(cursors.default);
+}
+
+const angleInput = document.getElementById('angleInput');
+const angleUnit = document.getElementById('angleUnit');
+const angleApply = document.getElementById('angleApply');
+
+function parsePiExpression(str) {
+  let s = str.trim().toLowerCase();
+  if (!s) return null;
+  s = s.replace(/pi/g, 'π');
+  s = s.replace(/[×*·]/g, '·');
+  s = s.replace(/(\d)π/g, '$1·π');
+  s = s.replace(/π(\d)/g, 'π·$1');
+  if (s === 'π') return Math.PI;
+  if (s === '-π') return -Math.PI;
+  s = s.replace(/\s+/g, '');
+  try {
+    const expr = s.replace(/π/g, 'Math.PI');
+    if (!/^[\dMath.PI+\-*/().\s]+$/.test(expr)) return null;
+    const result = Function('"use strict"; return (' + expr + ')')();
+    if (typeof result === 'number' && !isNaN(result) && isFinite(result)) return result;
+    return null;
+  } catch (e) { return null; }
+}
+
+function parseRadiansInput(str) {
+  const s = str.trim().toLowerCase();
+  if (!s) return null;
+  if (s.includes('π') || s.includes('pi')) return parsePiExpression(s);
+  const num = parseFloat(s.replace(',', '.'));
+  if (!isNaN(num) && isFinite(num)) return num;
+  return null;
+}
+
+function parseDegreesInput(str) {
+  const s = str.trim().replace(',', '.');
+  if (!s) return null;
+  const num = parseFloat(s);
+  if (!isNaN(num) && isFinite(num)) return num;
+  return null;
+}
+
+function applyAngleFromInput() {
+  let result = null;
+  const unit = angleUnit.value;
+  const raw = angleInput.value;
+
+  if (unit === 'deg') result = parseDegreesInput(raw);
+  else if (unit === 'rad') result = parseRadiansInput(raw);
+  else if (unit === 'pi') result = parsePiExpression(raw);
+
+  if (result === null) {
+    angleInput.classList.add('error');
+    setTimeout(() => angleInput.classList.remove('error'), 800);
+    return;
+  }
+
+  let rad;
+  if (unit === 'deg') {
+    rad = result * Math.PI / 180;
+  } else {
+    rad = result;
+  }
+
+  angle = rad;
+  angleNorm = rad % (Math.PI * 2);
+  if (angleNorm < 0) angleNorm += Math.PI * 2;
+
+  if (viewMode === 'graph') {
+    const layout = getGraphLayout();
+    graphPan.offsetX = -rad * layout.pxPerRad;
+  }
+
+  angleInput.classList.remove('error');
+  clearSolutions();
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+angleApply.addEventListener('click', applyAngleFromInput);
+angleInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); applyAngleFromInput(); angleInput.blur(); }
+});
+angleUnit.addEventListener('change', () => {
+  if (angleUnit.value === 'deg') angleInput.placeholder = '45, 720...';
+  else if (angleUnit.value === 'rad') angleInput.placeholder = '0.785, 12.56...';
+  else angleInput.placeholder = 'π/4, 10π...';
+});
+
+const trigInput = document.getElementById('trigInput');
+const trigFunc = document.getElementById('trigFunc');
+const trigApply = document.getElementById('trigApply');
+const solutionsBox = document.getElementById('solutionsBox');
+const solutionsList = document.getElementById('solutionsList');
+
+function findAnglesForValue(func, value) {
+  const results = [];
+  const EPS = 1e-9;
+  if (func === 'sin' || func === 'cos') {
+    if (value < -1 - EPS || value > 1 + EPS) return null;
+    value = Math.max(-1, Math.min(1, value));
+  }
+  if (func === 'sin') {
+    const a = Math.asin(value);
+    results.push(((a % (Math.PI*2)) + Math.PI*2) % (Math.PI*2));
+    results.push((((Math.PI - a) % (Math.PI*2)) + Math.PI*2) % (Math.PI*2));
+  } else if (func === 'cos') {
+    const a = Math.acos(value);
+    results.push(((a % (Math.PI*2)) + Math.PI*2) % (Math.PI*2));
+    results.push((((2 * Math.PI - a) % (Math.PI*2)) + Math.PI*2) % (Math.PI*2));
+  } else if (func === 'tan') {
+    const a = Math.atan(value);
+    results.push(((a % (Math.PI*2)) + Math.PI*2) % (Math.PI*2));
+    results.push((((a + Math.PI) % (Math.PI*2)) + Math.PI*2) % (Math.PI*2));
+  }
+  const unique = [];
+  for (const r of results) {
+    if (!unique.some(u => Math.abs(u - r) < 1e-6 || Math.abs(u - r + Math.PI*2) < 1e-6 || Math.abs(u - r - Math.PI*2) < 1e-6)) {
+      unique.push(r);
+    }
+  }
+  return unique.sort((a, b) => a - b);
+}
+
+function formatSolutionDeg(rad) {
+  return ((rad * 180 / Math.PI) % 360 + 360) % 360;
+}
+function formatSolutionRad(rad) {
+  let r = rad % (Math.PI * 2);
+  if (r < 0) r += Math.PI * 2;
+  const fractions = [
+    { value: 0, label: '0' }, { value: Math.PI/6, label: 'π/6' },
+    { value: Math.PI/4, label: 'π/4' }, { value: Math.PI/3, label: 'π/3' },
+    { value: Math.PI/2, label: 'π/2' }, { value: 2*Math.PI/3, label: '2π/3' },
+    { value: 3*Math.PI/4, label: '3π/4' }, { value: 5*Math.PI/6, label: '5π/6' },
+    { value: Math.PI, label: 'π' }, { value: 7*Math.PI/6, label: '7π/6' },
+    { value: 5*Math.PI/4, label: '5π/4' }, { value: 4*Math.PI/3, label: '4π/3' },
+    { value: 3*Math.PI/2, label: '3π/2' }, { value: 5*Math.PI/3, label: '5π/3' },
+    { value: 7*Math.PI/4, label: '7π/4' }, { value: 11*Math.PI/6, label: '11π/6' },
+    { value: Math.PI * 2, label: '2π' },
+  ];
+  for (const f of fractions) {
+    if (Math.abs(r - f.value) < 0.01) return f.label;
+  }
+  return r.toFixed(2);
+}
+
+function applyTrigInput() {
+  const func = trigFunc.value;
+  const raw = trigInput.value.trim().replace(',', '.');
+  const value = parseFloat(raw);
+
+  if (isNaN(value) || !isFinite(value)) {
+    trigInput.classList.add('error');
+    setTimeout(() => trigInput.classList.remove('error'), 800);
+    clearSolutions();
+    return;
+  }
+
+  const found = findAnglesForValue(func, value);
+  if (found === null) {
+    trigInput.classList.add('error');
+    setTimeout(() => trigInput.classList.remove('error'), 800);
+    clearSolutions();
+    return;
+  }
+
+  trigInput.classList.remove('error');
+  solutions = found;
+
+  solutionsList.innerHTML = '';
+  for (const rad of found) {
+    const chip = document.createElement('button');
+    chip.className = 'solutionChip';
+    const deg = formatSolutionDeg(rad);
+    chip.innerHTML = `${deg.toFixed(0)}°<small>${formatSolutionRad(rad)}</small>`;
+    chip.addEventListener('click', () => {
+      angle = rad;
+      angleNorm = rad;
+      if (viewMode === 'graph') {
+        const layout = getGraphLayout();
+        graphPan.offsetX = -rad * layout.pxPerRad;
+      }
+      if (navigator.vibrate) navigator.vibrate(10);
+    });
+    solutionsList.appendChild(chip);
+  }
+
+  solutionsBox.classList.add('visible');
+  if (found.length > 0) {
+    angle = found[0];
+    angleNorm = found[0];
+    if (viewMode === 'graph') {
+      const layout = getGraphLayout();
+      graphPan.offsetX = -found[0] * layout.pxPerRad;
+    }
+  }
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function clearSolutions() {
+  solutions = [];
+  solutionsBox.classList.remove('visible');
+  solutionsList.innerHTML = '';
+}
+
+trigApply.addEventListener('click', applyTrigInput);
+trigInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); applyTrigInput(); trigInput.blur(); }
+});
+
+const btnGraphMode = document.getElementById('btnGraphMode');
+const graphIcon = document.getElementById('graphIcon');
+const btnZoomIn = document.getElementById('btnZoomIn');
+const btnQuadFilter = document.getElementById('btnQuadFilter');
+
+btnGraphMode.addEventListener('click', () => {
+  viewMode = viewMode === 'circle' ? 'graph' : 'circle';
+  btnGraphMode.classList.toggle('active', viewMode === 'graph');
+
+  if (viewMode === 'graph') {
+    graphIcon.innerHTML = `<circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/>`;
+    btnGraphMode.title = 'Voltar ao círculo';
+    btnZoomIn.classList.add('hidden-mode');
+    btnQuadFilter.classList.add('disabled-mode');
+    btnQuadFilter.classList.remove('active');
+    const layout = getGraphLayout();
+    graphPan.offsetX = -angle * layout.pxPerRad;
+  } else {
+    graphIcon.innerHTML = `<path d="M3 12c3 -8 6 8 9 0s6 -8 9 0"/>`;
+    btnGraphMode.title = 'Ver gráfico de ondas';
+    btnZoomIn.classList.remove('hidden-mode');
+    btnQuadFilter.classList.remove('disabled-mode');
+    if (visibility.quad) btnQuadFilter.classList.add('active');
+    angleNorm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  }
+  updateBaseCursor();
+  if (navigator.vibrate) navigator.vibrate(10);
+});
+
+function zoomAt(screenX, screenY, factor) {
+  if (viewMode === 'graph') return;
+  const newZoom = Math.min(Math.max(camera.zoom * factor, MIN_ZOOM), MAX_ZOOM);
+  const realFactor = newZoom / camera.zoom;
+  camera.offsetX = (screenX - baseCx) - (screenX - baseCx - camera.offsetX) * realFactor;
+  camera.offsetY = (screenY - baseCy) - (screenY - baseCy - camera.offsetY) * realFactor;
+  camera.zoom = newZoom;
+  if (camera.zoom <= MIN_ZOOM) { camera.offsetX = 0; camera.offsetY = 0; }
+}
+
+canvas.addEventListener('wheel', (e) => {
+  if (viewMode === 'graph') {
+    e.preventDefault();
+    graphPan.offsetX -= e.deltaY;
+    return;
+  }
+  e.preventDefault();
+  if (e.deltaY > 0 && camera.zoom <= MIN_ZOOM) return;
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  zoomAt(e.clientX, e.clientY, factor);
+}, { passive: false });
+
+btnZoomIn.addEventListener('click', () => {
+  if (viewMode === 'graph') return;
+  zoomAt(baseCx, baseCy, 1.25);
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  camera.zoom = 1; camera.offsetX = 0; camera.offsetY = 0;
+  angle = 0; angleNorm = 0;
+  graphPan.offsetX = 0;
+  clearSolutions();
+});
+
+const btnTable = document.getElementById('btnTable');
+const angleTable = document.getElementById('angleTable');
+btnTable.addEventListener('click', () => {
+  angleTable.classList.toggle('hidden');
+  btnTable.classList.toggle('active', !angleTable.classList.contains('hidden'));
+});
+
+let isDraggingTable = false;
+let tableDragStart = { x: 0, y: 0 };
+let tableStartPos = { x: 0, y: 0 };
+
+function startTableDrag(clientX, clientY) {
+  isDraggingTable = true;
+  tableDragStart = { x: clientX, y: clientY };
+  const rect = angleTable.getBoundingClientRect();
+  tableStartPos = { x: rect.left, y: rect.top };
+}
+function moveTableDrag(clientX, clientY) {
+  if (!isDraggingTable) return;
+  const dx = clientX - tableDragStart.x;
+  const dy = clientY - tableDragStart.y;
+  angleTable.style.left = (tableStartPos.x + dx) + 'px';
+  angleTable.style.top = (tableStartPos.y + dy) + 'px';
+  angleTable.style.right = 'auto';
+}
+angleTable.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.angleTableBody')) return;
+  startTableDrag(e.clientX, e.clientY); e.preventDefault();
+});
+angleTable.addEventListener('touchstart', (e) => {
+  if (e.target.closest('.angleTableBody')) return;
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0]; startTableDrag(t.clientX, t.clientY);
+}, { passive: true });
+window.addEventListener('mousemove', (e) => moveTableDrag(e.clientX, e.clientY));
+window.addEventListener('mouseup', () => { isDraggingTable = false; });
+window.addEventListener('touchmove', (e) => {
+  if (!isDraggingTable) return;
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0]; moveTableDrag(t.clientX, t.clientY); e.preventDefault();
+}, { passive: false });
+window.addEventListener('touchend', () => { isDraggingTable = false; });
+window.addEventListener('touchcancel', () => { isDraggingTable = false; });
+
+document.querySelectorAll('.filterBar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.filter === 'quad' && viewMode === 'graph') return;
+    const f = btn.dataset.filter;
+    visibility[f] = !visibility[f];
+    btn.classList.toggle('active', visibility[f]);
+    if (navigator.vibrate) navigator.vibrate(5);
+  });
+});
+
+const bottomBar = document.getElementById('bottomBar');
+const toggleBtn = document.getElementById('toggleBtn');
+
+toggleBtn.textContent = '▶';
+
+toggleBtn.addEventListener('click', () => {
+  bottomBar.classList.toggle('collapsed');
+  const collapsed = bottomBar.classList.contains('collapsed');
+  toggleBtn.textContent = collapsed ? '▶' : '◀';
+  if (collapsed) {
+    drawingMode = false; erasingMode = false;
+    btnDraw.classList.remove('active'); btnErase.classList.remove('active');
+    colorPicker.classList.remove('visible');
+    updateBaseCursor();
+  }
+  if (navigator.vibrate) navigator.vibrate(8);
+});
+
+const btnDraw = document.getElementById('btnDraw');
+const btnErase = document.getElementById('btnErase');
+const btnClear = document.getElementById('btnClear');
+const colorPicker = document.getElementById('colorPicker');
+
+btnDraw.addEventListener('click', () => {
+  drawingMode = !drawingMode;
+  if (drawingMode) {
+    erasingMode = false;
+    btnDraw.classList.add('active'); btnErase.classList.remove('active');
+    colorPicker.classList.add('visible');
+  } else {
+    btnDraw.classList.remove('active');
+    colorPicker.classList.remove('visible');
+  }
+  updateBaseCursor();
+  if (navigator.vibrate) navigator.vibrate(10);
+});
+
+btnErase.addEventListener('click', () => {
+  erasingMode = !erasingMode;
+  if (erasingMode) {
+    drawingMode = false;
+    btnErase.classList.add('active'); btnDraw.classList.remove('active');
+    colorPicker.classList.remove('visible');
+  } else {
+    btnErase.classList.remove('active');
+  }
+  updateBaseCursor();
+  if (navigator.vibrate) navigator.vibrate(10);
+});
+
+btnClear.addEventListener('click', () => {
+  strokes.length = 0;
+  if (navigator.vibrate) navigator.vibrate(15);
+});
+
+document.querySelectorAll('.swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+    sw.classList.add('selected');
+    pencilColor = sw.dataset.color;
+    if (navigator.vibrate) navigator.vibrate(5);
+  });
+});
+
+function eraseAt(sx, sy) {
+  const w = screenToWorld(sx, sy);
+  const threshold = 20 / camera.zoom;
+  for (let i = strokes.length - 1; i >= 0; i--) {
+    const s = strokes[i];
+    for (const p of s.points) {
+      if (Math.hypot(p.x - w.x, p.y - w.y) < threshold) {
+        strokes.splice(i, 1); return;
+      }
+    }
+  }
+}
+
+function isNearPoint(sx, sy) {
+  if (viewMode !== 'circle') return false;
+  const w = screenToWorld(sx, sy);
+  const px = cx + Math.cos(angleNorm) * R;
+  const py = cy - Math.sin(angleNorm) * R;
+  const tolerance = 50 / camera.zoom;
+  return Math.hypot(w.x - px, w.y - py) < tolerance;
+}
+function isNearCircle(sx, sy) {
+  if (viewMode !== 'circle') return false;
+  const w = screenToWorld(sx, sy);
+  const d = Math.hypot(w.x - cx, w.y - cy);
+  const tolerance = 60 / camera.zoom;
+  return Math.abs(d - R) < tolerance;
+}
+
+function startInteract(clientX, clientY, isTouch = false) {
+  if (drawingMode) {
+    isDrawing = true;
+    const w = screenToWorld(clientX, clientY);
+    currentStroke = { color: pencilColor, points: [{ x: w.x, y: w.y }] };
+    strokes.push(currentStroke);
+    if (!isTouch) setCursor(cursors.drawing);
+    return;
+  }
+  if (erasingMode) {
+    isDrawing = true;
+    eraseAt(clientX, clientY);
+    if (!isTouch) setCursor(cursors.drawing);
+    return;
+  }
+
+  if (viewMode === 'circle') {
+    if (isNearPoint(clientX, clientY) || isNearCircle(clientX, clientY)) {
+      dragging = true;
+      if (!isTouch) setCursor(cursors.dragging);
+      angleNorm = pointerToAngle(clientX, clientY);
+      angle = angleNorm;
+    } else {
+      if (camera.zoom > MIN_ZOOM) {
+        panning = true;
+        if (!isTouch) setCursor(cursors.panning);
+        lastPointer = { x: clientX, y: clientY };
+      }
+    }
+  } else {
+    const w = screenToWorld(clientX, clientY);
+    const layout = getGraphLayout();
+    const inside = w.y >= layout.top - 40 && w.y <= layout.bottom + 40;
+    if (inside) {
+      dragging = true;
+      if (!isTouch) setCursor(cursors.dragging);
+      angle = screenXToThetaRaw(clientX);
+      angleNorm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    } else {
+      panning = true;
+      if (!isTouch) setCursor(cursors.panning);
+      lastPointer = { x: clientX, y: clientY };
+    }
+  }
+}
+
+function moveInteract(clientX, clientY) {
+  if (!dragging && !panning && !isDrawing) {
+    updateHoverCursor(clientX, clientY);
+  }
+  if (isDrawing) {
+    if (drawingMode && currentStroke) {
+      const w = screenToWorld(clientX, clientY);
+      currentStroke.points.push({ x: w.x, y: w.y });
+    } else if (erasingMode) eraseAt(clientX, clientY);
+    return;
+  }
+  if (dragging) {
+    if (viewMode === 'circle') {
+      angleNorm = pointerToAngle(clientX, clientY);
+      angle = angleNorm;
+    } else {
+      angle = screenXToThetaRaw(clientX);
+      angleNorm = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    }
+  } else if (panning) {
+    if (viewMode === 'graph') {
+      graphPan.offsetX += clientX - lastPointer.x;
+    } else {
+      camera.offsetX += clientX - lastPointer.x;
+      camera.offsetY += clientY - lastPointer.y;
+    }
+    lastPointer = { x: clientX, y: clientY };
+  }
+}
+
+function updateHoverCursor(clientX, clientY) {
+  if (drawingMode || erasingMode) { setCursor(cursors.drawing); return; }
+  if (viewMode === 'circle') {
+    if (isNearPoint(clientX, clientY) || isNearCircle(clientX, clientY)) setCursor(cursors.pointer);
+    else if (camera.zoom > MIN_ZOOM) setCursor(cursors.panning);
+    else setCursor(cursors.default);
+  } else {
+    setCursor(cursors.pointer);
+  }
+}
+
+function endInteract() {
+  if (isDrawing) { isDrawing = false; currentStroke = null; }
+  dragging = false; panning = false;
+  updateBaseCursor();
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button === 0) startInteract(e.clientX, e.clientY, false);
+  else if (e.button === 2) {
+    if (viewMode === 'circle' && camera.zoom > MIN_ZOOM) {
+      panning = true; setCursor(cursors.panning);
+      lastPointer = { x: e.clientX, y: e.clientY };
+    } else if (viewMode === 'graph') {
+      panning = true; setCursor(cursors.panning);
+      lastPointer = { x: e.clientX, y: e.clientY };
+    }
+  }
+});
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+window.addEventListener('mousemove', (e) => moveInteract(e.clientX, e.clientY));
+window.addEventListener('mouseup', () => endInteract());
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (e.touches.length === 1) {
+    const t = e.touches[0]; startInteract(t.clientX, t.clientY, true);
+  } else if (e.touches.length === 2) {
+    dragging = false; panning = false; isDrawing = false; currentStroke = null;
+    if (viewMode === 'circle') {
+      touchStartDist = getTouchDist(e.touches);
+      touchStartZoom = camera.zoom;
+      touchStartMid = getTouchMid(e.touches);
+      lastPointer = getTouchMid(e.touches);
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (e.touches.length === 1) {
+    const t = e.touches[0]; moveInteract(t.clientX, t.clientY);
+  } else if (e.touches.length === 2 && viewMode === 'circle') {
+    const dist = getTouchDist(e.touches);
+    const mid = getTouchMid(e.touches);
+    if (touchStartDist > 0) {
+      const factor = dist / touchStartDist;
+      const targetZoom = Math.min(Math.max(touchStartZoom * factor, MIN_ZOOM), MAX_ZOOM);
+      const realFactor = targetZoom / camera.zoom;
+      camera.offsetX = (mid.x - baseCx) - (mid.x - baseCx - camera.offsetX) * realFactor;
+      camera.offsetY = (mid.y - baseCy) - (mid.y - baseCy - camera.offsetY) * realFactor;
+      camera.zoom = targetZoom;
+      if (camera.zoom <= MIN_ZOOM) { camera.offsetX = 0; camera.offsetY = 0; }
+    }
+    camera.offsetX += mid.x - lastPointer.x;
+    camera.offsetY += mid.y - lastPointer.y;
+    lastPointer = mid;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (e.touches.length === 0) { endInteract(); touchStartDist = 0; }
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', (e) => {
+  e.preventDefault(); endInteract(); touchStartDist = 0;
+}, { passive: false });
+
+canvas.addEventListener('mouseleave', () => {
+  dragging = false; panning = false;
+  updateBaseCursor();
+});
+
+function getTouchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+function getTouchMid(touches) {
+  return {
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  };
+}
+function pointerToAngle(sx, sy) {
+  const w = screenToWorld(sx, sy);
+  return Math.atan2(-(w.y - cy), w.x - cx);
+}
+
+function formatAngle(rad) {
+  let deg = rad * 180 / Math.PI;
+  return deg.toFixed(1) + '°';
+}
+function formatRadians(rad) {
+  const ratio = rad / Math.PI;
+  const fractions = [
+    { value: 0, label: '0' },
+    { value: 1/6, label: 'π/6' }, { value: 1/4, label: 'π/4' },
+    { value: 1/3, label: 'π/3' }, { value: 1/2, label: 'π/2' },
+    { value: 2/3, label: '2π/3' }, { value: 3/4, label: '3π/4' },
+    { value: 5/6, label: '5π/6' }, { value: 1, label: 'π' },
+    { value: 7/6, label: '7π/6' }, { value: 5/4, label: '5π/4' },
+    { value: 4/3, label: '4π/3' }, { value: 3/2, label: '3π/2' },
+    { value: 5/3, label: '5π/3' }, { value: 7/4, label: '7π/4' },
+    { value: 11/6, label: '11π/6' }, { value: 2, label: '2π' },
+  ];
+  for (const f of fractions) {
+    if (Math.abs(ratio - f.value) < 0.01) return f.label;
+  }
+  if (Math.abs(ratio) >= 0.01) {
+    return ratio.toFixed(2) + 'π';
+  }
+  return rad.toFixed(2);
+}
+
+function updateInfo(sin, cos, tan) {
+  document.getElementById('angleVal').textContent = formatAngle(angle) + ' · ' + formatRadians(angle);
+  document.getElementById('sinVal').textContent = sin.toFixed(3);
+  document.getElementById('cosVal').textContent = cos.toFixed(3);
+  document.getElementById('tanVal').textContent = Math.abs(tan) > 1000 ? '∞' : tan.toFixed(3);
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawQuadrants() {
+  if (!visibility.quad) return;
+  const quadOffset = R * 0.65;
+  const quads = [
+    { label: 'I',    x: cx + quadOffset * 0.75, y: cy - quadOffset * 0.75, color: hexToRgba(COLORS.sin, 0.45) },
+    { label: 'II',   x: cx - quadOffset * 0.75, y: cy - quadOffset * 0.75, color: hexToRgba(COLORS.tan, 0.6) },
+    { label: 'III',  x: cx - quadOffset * 0.75, y: cy + quadOffset * 0.75, color: hexToRgba(COLORS.quad, 0.5) },
+    { label: 'IV',   x: cx + quadOffset * 0.75, y: cy + quadOffset * 0.75, color: hexToRgba(COLORS.primary, 0.45) },
+  ];
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 32px Georgia';
+  for (const q of quads) {
+    ctx.fillStyle = q.color;
+    ctx.fillText(q.label, q.x, q.y);
+  }
+}
+
+const NOTABLE_ANGLES = [
+  { deg: 0,   graus: '0°',   rad: '0',     radius: R => R + 58, offsetX: 0,   offsetY: 0,  anchor: 'left' },
+  { deg: 90,  graus: '90°',  rad: 'π/2',   radius: R => R + 52, offsetX: -20, offsetY: 0,  anchor: 'right' },
+  { deg: 180, graus: '180°', rad: 'π',     radius: R => R + 58, offsetX: 0,   offsetY: 0,  anchor: 'right' },
+  { deg: 270, graus: '270°', rad: '3π/2',  radius: R => R + 52, offsetX: -20, offsetY: 0,  anchor: 'right' },
+  { deg: 30,  graus: '30°',  rad: 'π/6',   radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'left' },
+  { deg: 45,  graus: '45°',  rad: 'π/4',   radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'left' },
+  { deg: 60,  graus: '60°',  rad: 'π/3',   radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'left' },
+  { deg: 120, graus: '120°', rad: '2π/3',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'right' },
+  { deg: 135, graus: '135°', rad: '3π/4',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'right' },
+  { deg: 150, graus: '150°', rad: '5π/6',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'right' },
+  { deg: 210, graus: '210°', rad: '7π/6',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'right' },
+  { deg: 225, graus: '225°', rad: '5π/4',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'right' },
+  { deg: 240, graus: '240°', rad: '4π/3',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'right' },
+  { deg: 300, graus: '300°', rad: '5π/3',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'left' },
+  { deg: 315, graus: '315°', rad: '7π/4',  radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'left' },
+  { deg: 330, graus: '330°', rad: '11π/6', radius: R => R + 26, offsetX: 0, offsetY: 0, anchor: 'left' },
+];
+
+function drawNotableAngles() {
+  const currentDeg = ((angleNorm * 180 / Math.PI) % 360 + 360) % 360;
+
+  for (const item of NOTABLE_ANGLES) {
+    const rad = item.deg * Math.PI / 180;
+    const radius = item.radius(R);
+    const lx = cx + Math.cos(rad) * radius + item.offsetX;
+    const ly = cy - Math.sin(rad) * radius + item.offsetY;
+
+    const diff = Math.abs(currentDeg - item.deg);
+    const isNear = diff < 3 || Math.abs(diff - 360) < 3;
+
+    const mx1 = cx + Math.cos(rad) * (R - 4);
+    const my1 = cy - Math.sin(rad) * (R - 4);
+    const mx2 = cx + Math.cos(rad) * (R + 4);
+    const my2 = cy - Math.sin(rad) * (R + 4);
+    ctx.strokeStyle = isNear ? COLORS.primary : `rgba(${COLORS.axisRgb}, 0.25)`;
+    ctx.lineWidth = (isNear ? 2.5 : 1) / camera.zoom;
+    ctx.beginPath(); ctx.moveTo(mx1, my1); ctx.lineTo(mx2, my2); ctx.stroke();
+
+    ctx.textAlign = item.anchor;
+    ctx.textBaseline = 'middle';
+
+    const gColor = isNear ? COLORS.primary : `rgba(${COLORS.axisRgb}, 0.65)`;
+
+    ctx.fillStyle = gColor;
+    ctx.font = isNear ? 'bold 13px "SF Mono", Courier New, monospace' : 'bold 11px "SF Mono", Courier New, monospace';
+    ctx.fillText(item.graus, lx, ly - 8);
+
+    ctx.fillStyle = gColor;
+    ctx.font = isNear ? 'bold 14px Georgia' : 'italic bold 12px Georgia';
+    ctx.fillText(item.rad, lx, ly + 8);
+  }
+}
+
+function drawSolutionsOnCircle() {
+  if (solutions.length === 0) return;
+  for (const rad of solutions) {
+    const px = cx + Math.cos(rad) * R;
+    const py = cy - Math.sin(rad) * R;
+    const pulse = 1 + Math.sin(Date.now() / 300) * 0.15;
+    ctx.beginPath();
+    ctx.arc(px, py, 18 / camera.zoom * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgba(COLORS.solution, 0.2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px, py, 13 / camera.zoom, 0, Math.PI * 2);
+    ctx.strokeStyle = COLORS.solution;
+    ctx.lineWidth = 3 / camera.zoom;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(px, py, 7 / camera.zoom, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.solution;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px, py, 3 / camera.zoom, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.strokeStyle = hexToRgba(COLORS.solution, 0.4);
+    ctx.lineWidth = 1.5 / camera.zoom;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+let cachedBgGrad = null;
+let cachedBgKey = '';
+
+function drawBackground() {
+  const key = `${W}x${H}`;
+  if (cachedBgKey !== key || !cachedBgGrad) {
+    cachedBgGrad = ctx.createLinearGradient(0, 0, W, H);
+    cachedBgGrad.addColorStop(0, '#F8FAFC');
+    cachedBgGrad.addColorStop(1, '#F1F5F9');
+    cachedBgKey = key;
+  }
+  ctx.fillStyle = cachedBgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 0.5;
+  const gridSize = 32 * (viewMode === 'circle' ? camera.zoom : 1);
+  const offX = viewMode === 'circle' ? camera.offsetX : 0;
+  const offY = viewMode === 'circle' ? camera.offsetY : 0;
+  const gridOffsetX = offX % gridSize;
+  const gridOffsetY = offY % gridSize;
+  for (let x = gridOffsetX; x < W; x += gridSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = gridOffsetY; y < H; y += gridSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+}
+
+function drawPencilStrokes() {
+  ctx.save();
+  if (viewMode === 'circle') {
+    ctx.translate(baseCx + camera.offsetX, baseCy + camera.offsetY);
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-baseCx, -baseCy);
+  }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const stroke of strokes) {
+    if (stroke.points.length < 2) {
+      if (stroke.points.length === 1) {
+        ctx.fillStyle = stroke.color;
+        ctx.beginPath();
+        ctx.arc(stroke.points[0].x, stroke.points[0].y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      continue;
+    }
+    ctx.strokeStyle = stroke.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for (let i = 1; i < stroke.points.length; i++) {
+      ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function getGraphLayout() {
+  const halfH = Math.min(H * 0.18, 140);
+  const y0 = baseCy;
+  const pxPerRad = 80;
+  return { y0, halfH, pxPerRad, top: y0 - halfH, bottom: y0 + halfH };
+}
+
+function screenXToThetaRaw(screenX) {
+  const layout = getGraphLayout();
+  return (screenX - baseCx - graphPan.offsetX) / layout.pxPerRad;
+}
+
+function thetaRawToScreenX(theta) {
+  const layout = getGraphLayout();
+  return baseCx + graphPan.offsetX + theta * layout.pxPerRad;
+}
+
+function drawCircleMode(sin, cos, tan) {
+  cx = baseCx; cy = baseCy; R = baseR;
+
+  ctx.save();
+  ctx.translate(baseCx + camera.offsetX, baseCy + camera.offsetY);
+  ctx.scale(camera.zoom, camera.zoom);
+  ctx.translate(-baseCx, -baseCy);
+
+  const topLeft = screenToWorld(0, 0);
+  const bottomRight = screenToWorld(W, H);
+
+  drawQuadrants();
+
+  ctx.strokeStyle = `rgba(${COLORS.axisRgb}, 0.55)`;
+  ctx.lineWidth = 1.5 / camera.zoom;
+  ctx.beginPath(); ctx.moveTo(topLeft.x, cy); ctx.lineTo(bottomRight.x, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, topLeft.y); ctx.lineTo(cx, bottomRight.y); ctx.stroke();
+
+  ctx.font = 'bold italic 20px Georgia';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = COLORS.axis;
+  ctx.fillText('X', bottomRight.x - 40 / camera.zoom, cy - 30 / camera.zoom);
+  ctx.fillText('Y', cx - 30 / camera.zoom, topLeft.y + 30 / camera.zoom);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(${COLORS.axisRgb}, 0.7)`;
+  ctx.lineWidth = 2 / camera.zoom;
+  ctx.stroke();
+
+  drawNotableAngles();
+
+  ctx.fillStyle = `rgba(${COLORS.axisRgb}, 0.85)`;
+  ctx.font = 'bold 14px "SF Mono", Courier New, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const offCircle = 25, offAxis = 22;
+  ctx.fillText('1', cx + R + offCircle, cy + offAxis);
+  ctx.fillText('-1', cx - R - offCircle, cy + offAxis);
+  ctx.textAlign = 'right';
+  ctx.fillText('1', cx - offAxis - 8, cy - R - offCircle);
+  ctx.fillText('-1', cx - offAxis - 8, cy + R + offCircle);
+
+  ctx.fillStyle = `rgba(${COLORS.axisRgb}, 0.55)`;
+  ctx.font = 'bold 11px "SF Mono", Courier New, monospace';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('0', cx + 8, cy + 8);
+
+  const px = cx + cos * R;
+  const py = cy - sin * R;
+  const tx = cx + R;
+
+  if (visibility.tan) {
+    ctx.strokeStyle = hexToRgba(COLORS.tan, 0.5);
+    ctx.lineWidth = 1.5 / camera.zoom;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(tx, topLeft.y); ctx.lineTo(tx, bottomRight.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = COLORS.tanDark;
+    ctx.font = 'bold italic 14px Georgia';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('tangente', tx + 12, cy - R * 1.6);
+  }
+
+  const cosThreshold = 0.02;
+  const hasTangent = Math.abs(cos) > cosThreshold;
+  const tanY = cy - tan * R;
+
+  if (visibility.cos) {
+    ctx.strokeStyle = COLORS.cos;
+    ctx.lineWidth = 4 / camera.zoom;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 1.5 / camera.zoom;
+    ctx.strokeStyle = hexToRgba(COLORS.cos, 0.35);
+    ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (visibility.sin) {
+    ctx.strokeStyle = COLORS.sin;
+    ctx.lineWidth = 4 / camera.zoom;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, py); ctx.stroke();
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 1.5 / camera.zoom;
+    ctx.strokeStyle = hexToRgba(COLORS.sin, 0.35);
+    ctx.beginPath(); ctx.moveTo(cx, py); ctx.lineTo(px, py); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.strokeStyle = hexToRgba(COLORS.primary, 0.7);
+  ctx.lineWidth = 2 / camera.zoom;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+  if (visibility.tan && hasTangent) {
+    const t = R * (1 / cos - 1);
+    const endX = px + cos * t;
+    const endY = py - sin * t;
+    if (Math.abs(endY - cy) < R * 8) {
+      ctx.strokeStyle = hexToRgba(COLORS.primary, 0.85);
+      ctx.lineWidth = 2.5 / camera.zoom;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(endX, endY); ctx.stroke();
+      ctx.beginPath(); ctx.arc(endX, endY, 5 / camera.zoom, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.primary; ctx.fill();
+    }
+  }
+
+  const arcRadius = R * 0.28;
+  ctx.strokeStyle = hexToRgba(COLORS.primary, 0.75);
+  ctx.lineWidth = 2 / camera.zoom;
+  ctx.beginPath(); ctx.arc(cx, cy, arcRadius, 0, -angleNorm, angleNorm > 0); ctx.stroke();
+
+  const midAngle = -angleNorm / 2;
+  const lx = cx + Math.cos(midAngle) * (arcRadius + 30);
+  const ly = cy + Math.sin(midAngle) * (arcRadius + 30);
+  ctx.fillStyle = COLORS.primary;
+  ctx.font = 'bold 13px "SF Mono", Courier New, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(formatAngle(angleNorm), lx, ly - 8);
+  ctx.fillStyle = hexToRgba(COLORS.primary, 0.75);
+  ctx.font = 'bold italic 14px Georgia';
+  ctx.fillText(formatRadians(angleNorm), lx, ly + 8);
+
+  if (visibility.tan && hasTangent && Math.abs(tanY - cy) < R * 4) {
+    ctx.strokeStyle = COLORS.tan;
+    ctx.lineWidth = 4 / camera.zoom;
+    ctx.beginPath(); ctx.moveTo(tx, cy); ctx.lineTo(tx, tanY); ctx.stroke();
+    ctx.beginPath(); ctx.arc(tx, tanY, 5 / camera.zoom, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.tanDark; ctx.fill();
+  }
+
+  drawSolutionsOnCircle();
+
+  ctx.beginPath(); ctx.arc(px, py, 12 / camera.zoom, 0, Math.PI * 2);
+  ctx.fillStyle = hexToRgba(COLORS.primary, 0.18); ctx.fill();
+  ctx.beginPath(); ctx.arc(px, py, 8 / camera.zoom, 0, Math.PI * 2);
+  ctx.fillStyle = COLORS.primary; ctx.fill();
+  ctx.beginPath(); ctx.arc(px, py, 4 / camera.zoom, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF'; ctx.fill();
+
+  ctx.restore();
+}
+
+// ============================================================
+// MODO GRÁFICO — EIXO X INFINITO, ONDAS SEMPRE EM [-1, 1]
+// ============================================================
+function drawGraphMode() {
+  const layout = getGraphLayout();
+  const { y0, halfH, pxPerRad, top, bottom } = layout;
+
+  // Eixo X (infinito — atravessa toda a tela)
+  ctx.strokeStyle = `rgba(${COLORS.axisRgb}, 0.7)`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+
+  // Eixo Y (fixo no centro)
+  ctx.beginPath(); ctx.moveTo(baseCx, top - 20); ctx.lineTo(baseCx, bottom + 20); ctx.stroke();
+
+  // Setas
+  const arrowSize = 8;
+  ctx.beginPath();
+  ctx.moveTo(W - 4, y0);
+  ctx.lineTo(W - 4 - arrowSize, y0 - arrowSize * 0.6);
+  ctx.lineTo(W - 4 - arrowSize, y0 + arrowSize * 0.6);
+  ctx.closePath();
+  ctx.fillStyle = `rgba(${COLORS.axisRgb}, 0.7)`;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(baseCx, top - 20);
+  ctx.lineTo(baseCx - arrowSize * 0.6, top - 20 + arrowSize);
+  ctx.lineTo(baseCx + arrowSize * 0.6, top - 20 + arrowSize);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = COLORS.axis;
+  ctx.font = 'bold italic 20px Georgia';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('θ', W - 30, y0 - 22);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('y', baseCx, top - 28);
+
+  // Marcações de π
+  const halfPi = Math.PI / 2;
+  const thetaLeft = (0 - baseCx - graphPan.offsetX) / pxPerRad;
+  const thetaRight = (W - baseCx - graphPan.offsetX) / pxPerRad;
+  const startMark = Math.floor(thetaLeft / halfPi) - 1;
+  const endMark = Math.ceil(thetaRight / halfPi) + 1;
+
+  ctx.font = 'bold 11px "SF Mono", Courier New, monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+  for (let i = startMark; i <= endMark; i++) {
+    const thetaMark = i * halfPi;
+    const sx = baseCx + graphPan.offsetX + thetaMark * pxPerRad;
+    if (sx < -30 || sx > W + 30) continue;
+
+    ctx.strokeStyle = `rgba(${COLORS.axisRgb}, 0.35)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sx, y0 - 4); ctx.lineTo(sx, y0 + 4); ctx.stroke();
+
+    const piRatio = thetaMark / Math.PI;
+    let label;
+    if (Math.abs(piRatio) < 0.01) label = '0';
+    else if (Math.abs(piRatio % 1) < 0.01) label = piRatio.toFixed(0) + 'π';
+    else if (Math.abs(piRatio - 0.5) < 0.01) label = 'π/2';
+    else if (Math.abs(piRatio + 0.5) < 0.01) label = '-π/2';
+    else if (Math.abs(piRatio - 1.5) < 0.01) label = '3π/2';
+    else if (Math.abs(piRatio + 1.5) < 0.01) label = '-3π/2';
+    else if (Math.abs(piRatio - 2.5) < 0.01) label = '5π/2';
+    else if (Math.abs(piRatio + 2.5) < 0.01) label = '-5π/2';
+    else if (Math.abs(piRatio - 0.25) < 0.01) label = 'π/4';
+    else if (Math.abs(piRatio + 0.25) < 0.01) label = '-π/4';
+    else label = piRatio.toFixed(1) + 'π';
+
+    ctx.fillStyle = `rgba(${COLORS.axisRgb}, 0.75)`;
+    ctx.fillText(label, sx, y0 + 8);
+  }
+
+  // Marcações Y — SEMPRE [-1, 1]
+  const yMarks = [{ val: 1, label: '1' }, { val: 0, label: '0' }, { val: -1, label: '-1' }];
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const m of yMarks) {
+    const my = y0 - m.val * halfH;
+    ctx.strokeStyle = `rgba(${COLORS.axisRgb}, 0.35)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(baseCx - 4, my); ctx.lineTo(baseCx + 4, my); ctx.stroke();
+    ctx.fillStyle = `rgba(${COLORS.axisRgb}, 0.85)`;
+    ctx.font = 'bold 11px "SF Mono", Courier New, monospace';
+    ctx.fillText(m.label, baseCx - 8, my);
+  }
+
+  // Linhas guias horizontais
+  ctx.setLineDash([3, 5]);
+  ctx.strokeStyle = `rgba(${COLORS.axisRgb}, 0.12)`;
+  ctx.lineWidth = 1;
+  for (const m of yMarks) {
+    const my = y0 - m.val * halfH;
+    ctx.beginPath(); ctx.moveTo(0, my); ctx.lineTo(W, my); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // ============================================================
+  // ONDAS — SEMPRE NO RANGE [-1, 1] (halfH)
+  // ============================================================
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, top, W, bottom - top);
+  ctx.clip();
+
+  const step = 2;
+
+  // SENO — sempre em [-halfH, halfH]
+  if (visibility.sin) {
+    ctx.strokeStyle = COLORS.sin;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let sx = 0; sx <= W; sx += step) {
+      const theta = (sx - baseCx - graphPan.offsetX) / pxPerRad;
+      const y = y0 - Math.sin(theta) * halfH;
+      if (sx === 0) ctx.moveTo(sx, y); else ctx.lineTo(sx, y);
+    }
+    ctx.stroke();
+  }
+
+  // COSSENO — sempre em [-halfH, halfH]
+  if (visibility.cos) {
+    ctx.strokeStyle = COLORS.cos;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let sx = 0; sx <= W; sx += step) {
+      const theta = (sx - baseCx - graphPan.offsetX) / pxPerRad;
+      const y = y0 - Math.cos(theta) * halfH;
+      if (sx === 0) ctx.moveTo(sx, y); else ctx.lineTo(sx, y);
+    }
+    ctx.stroke();
+  }
+
+  // TANGENTE — ramos separados, cortados nos limites verticais
+  if (visibility.tan) {
+    ctx.strokeStyle = COLORS.tan;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const tanLimit = 3;
+    const kStart = Math.floor((thetaLeft - Math.PI / 2) / Math.PI) - 1;
+    const kEnd = Math.ceil((thetaRight - Math.PI / 2) / Math.PI) + 1;
+
+    for (let k = kStart; k < kEnd; k++) {
+      const asymptoteLeft = Math.PI / 2 + k * Math.PI;
+      const asymptoteRight = Math.PI / 2 + (k + 1) * Math.PI;
+      const segStart = Math.max(asymptoteLeft + 0.001, thetaLeft);
+      const segEnd = Math.min(asymptoteRight - 0.001, thetaRight);
+      if (segStart >= segEnd) continue;
+
+      const samples = 200;
+      let started = false;
+      ctx.beginPath();
+
+      for (let i = 0; i <= samples; i++) {
+        const theta = segStart + (segEnd - segStart) * (i / samples);
+        const tv = Math.tan(theta);
+        if (Math.abs(tv) > tanLimit) {
+          if (started) {
+            ctx.stroke();
+            ctx.beginPath();
+            started = false;
+          }
+          continue;
+        }
+        const sx = baseCx + graphPan.offsetX + theta * pxPerRad;
+        const sy = y0 - tv * halfH;
+        if (!started) {
+          ctx.moveTo(sx, sy);
+          started = true;
+        } else {
+          ctx.lineTo(sx, sy);
+        }
+      }
+      if (started) ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+
+  // ============================================================
+  // CURSOR DO ÂNGULO — usa theta RAW (posição no eixo X infinito)
+  // Mas os valores de sen/cos são SEMPRE em [-1, 1]
+  // ============================================================
+  const angleX = thetaRawToScreenX(angle);
+  if (angleX >= -20 && angleX <= W + 20) {
+    ctx.strokeStyle = hexToRgba(COLORS.primary, 0.6);
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(angleX, top); ctx.lineTo(angleX, bottom); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Calcula sen/cos/tan SEMPRE com o valor real do ângulo
+    // (não importa se é 100π, o seno é o mesmo do ciclo)
+    const sinA = Math.sin(angle);
+    const cosA = Math.cos(angle);
+    const tanA = Math.tan(angle);
+
+    // SENO — sempre em [-halfH, halfH]
+    if (visibility.sin) {
+      const sy = y0 - sinA * halfH;
+      ctx.beginPath(); ctx.arc(angleX, sy, 8, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.sin; ctx.fill();
+      ctx.beginPath(); ctx.arc(angleX, sy, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    }
+    // COSSENO — sempre em [-halfH, halfH]
+    if (visibility.cos) {
+      const cy2 = y0 - cosA * halfH;
+      ctx.beginPath(); ctx.arc(angleX, cy2, 8, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.cos; ctx.fill();
+      ctx.beginPath(); ctx.arc(angleX, cy2, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    }
+    // TANGENTE — só desenha se estiver dentro dos limites
+    if (visibility.tan) {
+      if (Math.abs(tanA) < 5) {
+        const ty = y0 - tanA * halfH;
+        ctx.beginPath(); ctx.arc(angleX, ty, 7, 0, Math.PI * 2);
+        ctx.fillStyle = COLORS.tanDark; ctx.fill();
+        ctx.beginPath(); ctx.arc(angleX, ty, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF'; ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = COLORS.primary;
+    ctx.font = 'bold 14px "SF Mono", Courier New, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(formatAngle(angle), angleX, top - 8);
+  }
+
+  // Soluções replicadas em todos os períodos visíveis
+  for (const rad of solutions) {
+    for (let k = -20; k <= 20; k++) {
+      const sx = baseCx + graphPan.offsetX + (rad + k * Math.PI * 2) * pxPerRad;
+      if (sx < -20 || sx > W + 20) continue;
+      ctx.strokeStyle = hexToRgba(COLORS.solution, 0.5);
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(sx, top); ctx.lineTo(sx, bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(sx, y0, 4, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.solution; ctx.fill();
+    }
+  }
+
+  // Legenda
+  const legX = 20;
+  const legY = top - 30;
+  ctx.font = 'bold 12px "SF Mono", Courier New, monospace';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  let legOffset = 0;
+  if (visibility.sin) {
+    ctx.fillStyle = COLORS.sin;
+    ctx.fillRect(legX, legY + legOffset - 5, 20, 3);
+    ctx.fillStyle = COLORS.text;
+    ctx.fillText('sen θ', legX + 28, legY + legOffset);
+    legOffset += 18;
+  }
+  if (visibility.cos) {
+    ctx.fillStyle = COLORS.cos;
+    ctx.fillRect(legX, legY + legOffset - 5, 20, 3);
+    ctx.fillStyle = COLORS.text;
+    ctx.fillText('cos θ', legX + 28, legY + legOffset);
+    legOffset += 18;
+  }
+  if (visibility.tan) {
+    ctx.fillStyle = COLORS.tanDark;
+    ctx.fillRect(legX, legY + legOffset - 5, 20, 3);
+    ctx.fillStyle = COLORS.text;
+    ctx.fillText('tan θ', legX + 28, legY + legOffset);
+  }
+}
+
+let lastRenderTime = 0;
+const targetFPS = 60;
+const frameInterval = 1000 / targetFPS;
+let animationFrameId = null;
+
+function draw(timestamp = 0) {
+  animationFrameId = requestAnimationFrame(draw);
+
+  const delta = timestamp - lastRenderTime;
+  if (delta < frameInterval - 1) return;
+  lastRenderTime = timestamp - (delta % frameInterval);
+
+  const angleForCalc = viewMode === 'graph' ? angle : angleNorm;
+  const sin = Math.sin(angleForCalc);
+  const cos = Math.cos(angleForCalc);
+  const tan = sin / cos;
+
+  drawBackground();
+  drawPencilStrokes();
+
+  if (viewMode === 'circle') drawCircleMode(sin, cos, tan);
+  else drawGraphMode();
+
+  updateInfo(sin, cos, tan);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  } else if (!animationFrameId) {
+    lastRenderTime = 0;
+    animationFrameId = requestAnimationFrame(draw);
+  }
+});
+
+animationFrameId = requestAnimationFrame(draw);
+</script>
+</body>
+</html>

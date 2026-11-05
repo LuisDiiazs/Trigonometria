@@ -1,0 +1,489 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#2563EB" id="metaThemeColor">
+
+  <title>C├¡rculo Trigonom├®trico Interativo ÔÇö Trigonometria visual</title>
+  <meta name="description" content="Explore o c├¡rculo trigonom├®trico: arraste o ├óngulo, visualize seno, cosseno e tangente, compare com o gr├ífico de ondas e consulte a tabela de ├óngulos not├íveis.">
+  <meta name="keywords" content="c├¡rculo trigonom├®trico, trigonometria, seno, cosseno, tangente, ├óngulos not├íveis, gr├ífico de ondas">
+  <meta name="robots" content="index, follow">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="C├¡rculo Trigonom├®trico">
+  <meta property="og:title" content="C├¡rculo Trigonom├®trico Interativo">
+  <meta property="og:description" content="Uma ferramenta visual para entender seno, cosseno e tangente na pr├ítica.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="C├¡rculo Trigonom├®trico Interativo">
+  <meta name="twitter:description" content="Uma ferramenta visual para entender seno, cosseno e tangente na pr├ítica.">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M16 16l6-4' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.8' fill='white'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <script>
+    // Define o tema antes da primeira pintura para evitar "flash" de cor.
+    (function () {
+      var theme = 'light';
+      try {
+        var saved = localStorage.getItem('trigo-theme');
+        if (saved === 'dark' || saved === 'light') theme = saved;
+        else if (window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark';
+      } catch (e) { /* localStorage indispon├¡vel */ }
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "C├¡rculo Trigonom├®trico Interativo",
+    "description": "Ferramenta visual para estudar o c├¡rculo trigonom├®trico, o gr├ífico das fun├º├Áes seno, cosseno e tangente e a tabela de ├óngulos not├íveis.",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "pt-BR",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Ir para o conte├║do</a>
+
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="C├¡rculo Trigonom├®trico ÔÇö in├¡cio">
+        <span class="brandMark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 12l6.2-4.1"></path>
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"></circle>
+          </svg>
+        </span>
+        <span class="brandText">
+          <span class="brandTitle">C├¡rculo Trigonom├®trico</span>
+          <span class="brandSub">Laborat├│rio interativo de trigonometria</span>
+        </span>
+      </a>
+
+      <div class="topbarActions">
+        <div class="segmented" role="group" aria-label="Modo de visualiza├º├úo">
+          <button type="button" class="segment active" id="btnViewCircle" aria-pressed="true" title="Ver c├¡rculo trigonom├®trico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 12l5.5-3.6"></path>
+            </svg>
+            <span>C├¡rculo</span>
+          </button>
+          <button type="button" class="segment" id="btnViewGraph" aria-pressed="false" title="Ver gr├ífico das ondas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12c3-8 6 8 9 0s6-8 9 0"></path>
+            </svg>
+            <span>Gr├ífico</span>
+          </button>
+        </div>
+
+        <button type="button" class="btn" id="btnTable" aria-pressed="false" title="Tabela de ├óngulos not├íveis (T)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="15" y1="9" x2="15" y2="21"></line>
+          </svg>
+          <span class="btnLabel">Tabela</span>
+        </button>
+
+        <button type="button" class="btn btn-icon" id="btnTheme" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+          <svg class="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <svg class="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+          </svg>
+        </button>
+
+        <button type="button" class="btn btn-icon btn-panel-toggle" id="btnPanel" aria-label="Abrir controles" aria-expanded="false" aria-controls="panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="stage" id="main" tabindex="-1">
+      <aside class="panel" id="panel" aria-label="Valores e controles">
+        <div class="panelHead">
+          <span>Controles</span>
+          <button type="button" id="btnPanelClose" aria-label="Fechar controles">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <section class="card">
+          <div class="cardHeader">
+            <span class="cardIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </span>
+            <h2>Valores atuais</h2>
+            <span class="badge" id="quadBadge">Sobre o eixo</span>
+          </div>
+          <div class="cardBody">
+            <div class="angleDisplay">
+              <span class="angleDisplayValue" id="angleVal">0,0┬░</span>
+              <span class="angleDisplayRad" id="angleRadVal">0 rad</span>
+            </div>
+            <div class="metrics">
+              <div class="metric sin">
+                <span class="metricLabel">sen ╬©</span>
+                <strong class="metricValue" id="sinVal">0,000</strong>
+              </div>
+              <div class="metric cos">
+                <span class="metricLabel">cos ╬©</span>
+                <strong class="metricValue" id="cosVal">1,000</strong>
+              </div>
+              <div class="metric tan">
+                <span class="metricLabel">tan ╬©</span>
+                <strong class="metricValue" id="tanVal">0,000</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <span class="cardIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20V4M5 11l7-7 7 7"></path>
+              </svg>
+            </span>
+            <h2>Inserir ├óngulo</h2>
+          </div>
+          <div class="cardBody">
+            <div class="field">
+              <label class="fieldLabel" for="angleInput">├éngulo</label>
+              <div class="inputRow">
+                <input type="text" id="angleInput" placeholder="ex.: 45 ┬À 720" inputmode="decimal" autocomplete="off" spellcheck="false">
+                <span class="selectWrap">
+                  <select id="angleUnit" aria-label="Unidade do ├óngulo" data-prev="deg">
+                    <option value="deg">┬░</option>
+                    <option value="rad">rad</option>
+                    <option value="pi">¤Ç</option>
+                  </select>
+                </span>
+                <button type="button" class="btnPrimary" id="angleApply" title="Aplicar ├óngulo" aria-label="Aplicar ├óngulo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M12 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="quickAngles" aria-label="├éngulos r├ípidos">
+              <button type="button" class="quickChip" data-angle="0">0┬░</button>
+              <button type="button" class="quickChip" data-angle="30">30┬░</button>
+              <button type="button" class="quickChip" data-angle="45">45┬░</button>
+              <button type="button" class="quickChip" data-angle="60">60┬░</button>
+              <button type="button" class="quickChip" data-angle="90">90┬░</button>
+              <button type="button" class="quickChip" data-angle="180">180┬░</button>
+              <button type="button" class="quickChip" data-angle="270">270┬░</button>
+              <button type="button" class="quickChip" data-angle="360">360┬░</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <span class="cardIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m20 20-3.5-3.5"></path>
+              </svg>
+            </span>
+            <h2>Encontrar ├óngulo</h2>
+          </div>
+          <div class="cardBody">
+            <div class="field">
+              <label class="fieldLabel" for="trigInput">Valor da fun├º├úo</label>
+              <div class="inputRow">
+                <input type="text" id="trigInput" placeholder="ex.: 0,5 ou -1" inputmode="decimal" autocomplete="off" spellcheck="false">
+                <span class="selectWrap">
+                  <select id="trigFunc" aria-label="Fun├º├úo trigonom├®trica">
+                    <option value="sin">sen</option>
+                    <option value="cos">cos</option>
+                    <option value="tan">tan</option>
+                  </select>
+                </span>
+                <button type="button" class="btnPrimary" id="trigApply" title="Buscar ├óngulos" aria-label="Buscar ├óngulos">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-3.5-3.5"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="solutionsBox" id="solutionsBox" role="status">
+              <h3>Solu├º├Áes no ciclo</h3>
+              <div class="solutionsList" id="solutionsList"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <span class="cardIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path>
+                <circle cx="12" cy="12" r="2.5"></circle>
+              </svg>
+            </span>
+            <h2>Exibir no gr├ífico</h2>
+          </div>
+          <div class="cardBody">
+            <div class="toggleGrid">
+              <button type="button" class="toggleChip" data-filter="sin" aria-pressed="true">
+                <span class="dot" aria-hidden="true"></span>seno
+              </button>
+              <button type="button" class="toggleChip" data-filter="cos" aria-pressed="true">
+                <span class="dot" aria-hidden="true"></span>cosseno
+              </button>
+              <button type="button" class="toggleChip" data-filter="tan" aria-pressed="true">
+                <span class="dot" aria-hidden="true"></span>tangente
+              </button>
+              <button type="button" class="toggleChip" data-filter="quad" id="btnQuadFilter" aria-pressed="true">
+                <span class="dot" aria-hidden="true"></span>quadrantes
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <span class="cardIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+              </svg>
+            </span>
+            <h2>Anota├º├Áes</h2>
+          </div>
+          <div class="cardBody">
+            <div class="toolGrid">
+              <button type="button" class="toolBtn" id="btnDraw" aria-pressed="false" title="L├ípis (D)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                  <path d="M2 2l7.586 7.586"></path>
+                  <circle cx="11" cy="11" r="2"></circle>
+                </svg>
+                L├ípis
+              </button>
+              <button type="button" class="toolBtn" id="btnErase" aria-pressed="false" title="Borracha (E)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 20H7L3 16a2 2 0 0 1 0-2.83l10-10a2 2 0 0 1 2.83 0l5 5a2 2 0 0 1 0 2.83L11 20"></path>
+                  <line x1="8" y1="12" x2="14" y2="18"></line>
+                </svg>
+                Borracha
+              </button>
+              <button type="button" class="toolBtn" id="btnClear" title="Limpar desenhos">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                  <path d="M10 11v6M14 11v6"></path>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                </svg>
+                Limpar
+              </button>
+            </div>
+            <div class="colorPicker" id="colorPicker">
+              <span class="colorPickerLabel">Cor</span>
+              <button type="button" class="swatch selected" data-color="ink" aria-label="Tinta padr├úo"></button>
+              <button type="button" class="swatch" data-color="#2563EB" style="background:#2563EB" aria-label="Azul"></button>
+              <button type="button" class="swatch" data-color="#E11D48" style="background:#E11D48" aria-label="Vermelho"></button>
+              <button type="button" class="swatch" data-color="#D97706" style="background:#D97706" aria-label="Laranja"></button>
+              <button type="button" class="swatch" data-color="#059669" style="background:#059669" aria-label="Verde"></button>
+              <button type="button" class="swatch" data-color="#7C3AED" style="background:#7C3AED" aria-label="Roxo"></button>
+            </div>
+          </div>
+        </section>
+
+        <details class="help">
+          <summary>
+            Como usar
+            <svg class="chev" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 18l6-6-6-6"></path>
+            </svg>
+          </summary>
+          <div class="helpBody">
+            <ul>
+              <li>Arraste o ponto sobre o c├¡rculo para mudar o ├óngulo.</li>
+              <li>Use a roda do mouse, o gesto de pin├ºa ou os bot├Áes de zoom para aproximar.</li>
+              <li>Alterne entre <strong>C├¡rculo</strong> e <strong>Gr├ífico</strong> para comparar as fun├º├Áes.</li>
+              <li>Clique em um resultado de ÔÇ£Encontrar ├ónguloÔÇØ para destac├í-lo no ciclo.</li>
+            </ul>
+            <p>Atalhos: <kbd>R</kbd> reinicia ┬À <kbd>T</kbd> tabela ┬À <kbd>D</kbd> l├ípis ┬À <kbd>E</kbd> borracha ┬À <kbd>Esc</kbd> fecha pain├®is.</p>
+          </div>
+        </details>
+      </aside>
+
+      <div class="viewport">
+        <canvas id="canvas" role="img" aria-label="C├¡rculo trigonom├®trico unit├írio com um ponto m├│vel que define o ├óngulo. Os valores de seno, cosseno e tangente aparecem no painel de valores." width="848" height="638" class="is-grab"></canvas>
+
+        <div class="hint is-hidden" id="hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Arraste o ponto para explorar o ciclo
+        </div>
+
+        <div class="zoomTools" role="group" aria-label="Controles de zoom">
+          <button type="button" id="btnZoomIn" title="Aumentar zoom" aria-label="Aumentar zoom">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </button>
+          <button type="button" id="btnZoomOut" title="Diminuir zoom" aria-label="Diminuir zoom">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <path d="M5 12h14"></path>
+            </svg>
+          </button>
+          <span class="divider" aria-hidden="true"></span>
+          <button type="button" id="btnReset" title="Reiniciar (R)" aria-label="Reiniciar visualiza├º├úo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+          </button>
+        </div>
+
+        <section class="tableDrawer hidden" id="angleTable" aria-labelledby="tableTitle">
+          <div class="tableHeader">
+            <h2 id="tableTitle">├éngulos not├íveis</h2>
+            <button type="button" class="closeBtn" id="btnTableClose" aria-label="Fechar tabela">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M18 6L6 18M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="tableBody">
+            <table>
+              <thead>
+                <tr><th scope="col">╬©</th><th scope="col">rad</th><th scope="col">sen</th><th scope="col">cos</th><th scope="col">tan</th></tr>
+              </thead>
+              <tbody>
+                <tr class="section-title"><td colspan="5">1┬║ quadrante</td></tr>
+                <tr><td class="col-angle">0┬░</td><td>0</td><td class="col-sin">0</td><td class="col-cos">1</td><td class="col-tan">0</td></tr>
+                <tr><td class="col-angle">30┬░</td><td>¤Ç/6</td><td class="col-sin">1/2</td><td class="col-cos">ÔêÜ3/2</td><td class="col-tan">ÔêÜ3/3</td></tr>
+                <tr><td class="col-angle">45┬░</td><td>¤Ç/4</td><td class="col-sin">ÔêÜ2/2</td><td class="col-cos">ÔêÜ2/2</td><td class="col-tan">1</td></tr>
+                <tr><td class="col-angle">60┬░</td><td>¤Ç/3</td><td class="col-sin">ÔêÜ3/2</td><td class="col-cos">1/2</td><td class="col-tan">ÔêÜ3</td></tr>
+                <tr><td class="col-angle">90┬░</td><td>¤Ç/2</td><td class="col-sin">1</td><td class="col-cos">0</td><td class="col-tan">Ôê×</td></tr>
+                <tr class="section-title"><td colspan="5">2┬║ quadrante</td></tr>
+                <tr><td class="col-angle">120┬░</td><td>2¤Ç/3</td><td class="col-sin">ÔêÜ3/2</td><td class="col-cos">-1/2</td><td class="col-tan">-ÔêÜ3</td></tr>
+                <tr><td class="col-angle">135┬░</td><td>3¤Ç/4</td><td class="col-sin">ÔêÜ2/2</td><td class="col-cos">-ÔêÜ2/2</td><td class="col-tan">-1</td></tr>
+                <tr><td class="col-angle">150┬░</td><td>5¤Ç/6</td><td class="col-sin">1/2</td><td class="col-cos">-ÔêÜ3/2</td><td class="col-tan">-ÔêÜ3/3</td></tr>
+                <tr><td class="col-angle">180┬░</td><td>¤Ç</td><td class="col-sin">0</td><td class="col-cos">-1</td><td class="col-tan">0</td></tr>
+                <tr class="section-title"><td colspan="5">3┬║ quadrante</td></tr>
+                <tr><td class="col-angle">210┬░</td><td>7¤Ç/6</td><td class="col-sin">-1/2</td><td class="col-cos">-ÔêÜ3/2</td><td class="col-tan">ÔêÜ3/3</td></tr>
+                <tr><td class="col-angle">225┬░</td><td>5¤Ç/4</td><td class="col-sin">-ÔêÜ2/2</td><td class="col-cos">-ÔêÜ2/2</td><td class="col-tan">1</td></tr>
+                <tr><td class="col-angle">240┬░</td><td>4¤Ç/3</td><td class="col-sin">-ÔêÜ3/2</td><td class="col-cos">-1/2</td><td class="col-tan">ÔêÜ3</td></tr>
+                <tr><td class="col-angle">270┬░</td><td>3¤Ç/2</td><td class="col-sin">-1</td><td class="col-cos">0</td><td class="col-tan">Ôê×</td></tr>
+                <tr class="section-title"><td colspan="5">4┬║ quadrante</td></tr>
+                <tr><td class="col-angle">300┬░</td><td>5¤Ç/3</td><td class="col-sin">-ÔêÜ3/2</td><td class="col-cos">1/2</td><td class="col-tan">-ÔêÜ3</td></tr>
+                <tr><td class="col-angle">315┬░</td><td>7¤Ç/4</td><td class="col-sin">-ÔêÜ2/2</td><td class="col-cos">ÔêÜ2/2</td><td class="col-tan">-1</td></tr>
+                <tr><td class="col-angle">330┬░</td><td>11¤Ç/6</td><td class="col-sin">-1/2</td><td class="col-cos">ÔêÜ3/2</td><td class="col-tan">-ÔêÜ3/3</td></tr>
+                <tr><td class="col-angle">360┬░</td><td>2¤Ç</td><td class="col-sin">0</td><td class="col-cos">1</td><td class="col-tan">0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <script src="app.js" defer=""></script>
+  <script src="_test.js" defer=""></script>
+
+
+<pre id="__testout">{
+  "pi": {
+    "pi10": 31.41592653589793,
+    "pi3_2": 4.71238898038469,
+    "pi2": 6.283185307179586,
+    "piHalf": 1.5707963267948966,
+    "piDec": 1.5707963267948966,
+    "piNeg": -1.5707963267948966,
+    "piPlain": 3.141592653589793,
+    "piGroup": 8.283185307179586,
+    "invalid": null
+  },
+  "piOk": true,
+  "graphDrag": {
+    "before": 0,
+    "after": 1,
+    "delta": 1,
+    "rectLeft": 334
+  },
+  "graphDragOk": true,
+  "radians": {
+    "fourPi": "4¤Ç",
+    "twoPi": "2¤Ç",
+    "negPi": "-¤Ç",
+    "negHalf": "-¤Ç/2",
+    "halfPi": "¤Ç/2",
+    "one": "0,32¤Ç"
+  },
+  "radiansOk": true,
+  "solutionDeg": 0,
+  "unitConversion": {
+    "asPi": "0,25¤Ç",
+    "asRad": "0,7854",
+    "backDeg": "45"
+  },
+  "unitConversionOk": true,
+  "themeInk": {
+    "before": "#E8EEF9",
+    "afterThemeText": "#0F172A",
+    "stroke": "#0F172A"
+  },
+  "themeInkOk": true,
+  "inverse": [
+    "30┬░¤Ç/6",
+    "150┬░5¤Ç/6"
+  ],
+  "inverseOk": true,
+  "clearedOnFuncChange": true,
+  "draw": {
+    "drawingMode": true,
+    "strokes": 1,
+    "drawing": false,
+    "points": 2
+  },
+  "zoom": {
+    "zoomed": 1.25,
+    "reset": 1
+  },
+  "zoomOk": true,
+  "stuckDrag": {
+    "started": true,
+    "afterRelease": false
+  },
+  "stuckDragOk": true,
+  "screenTheta": {
+    "atZero": 0
+  },
+  "screenThetaOk": true
+}</pre></body></html>
